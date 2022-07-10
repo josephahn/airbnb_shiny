@@ -26,6 +26,11 @@ neighbourhoods <- data %>%
   arrange(neighbourhood)
 neighbourhoods <- rbind(c(""), neighbourhoods)
 
+room_types <- data %>%
+  distinct(room_type) %>%
+  arrange(room_type)
+room_types <- rbind(c(""), room_types)
+
 ui <- fluidPage(
   # TODO: improve performance https://shiny.rstudio.com/reference/shiny/latest/selectInput.html
   # selectInput(inputId = "host",
@@ -39,6 +44,10 @@ ui <- fluidPage(
               label = "Neighbourhood",
               choices = neighbourhoods$neighbourhood,
               multiple = TRUE),
+  selectInput(inputId = "room_type",
+              label = "Room Type",
+              choices = room_types$room_type,
+              multiple = TRUE),
   dataTableOutput("data")
 )
 
@@ -49,7 +58,8 @@ server <- function(input, output) {
     data %>%
       # filter(host_id == input$host) %>%
       filter(neighbourhood_group %in% input$borough) %>%
-      filter(neighbourhood %in% input$neighbourhood)
+      filter(neighbourhood %in% input$neighbourhood) %>%
+      filter(room_type %in% input$room_type)
   )
 }
 
