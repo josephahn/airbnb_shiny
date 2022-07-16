@@ -52,15 +52,14 @@ ui <- fluidPage(
 )
 
 server <- function(input, output) {
-  # filter data by ALL inputs
-  
   output$data <- renderDataTable(
     data %>%
       # filter(host_id == input$host) %>%
-      filter(neighbourhood_group %in% input$borough) %>%
-      filter(neighbourhood %in% input$neighbourhood) %>%
-      filter(room_type %in% input$room_type)
+      filter(if (is.null(input$borough)) TRUE else (neighbourhood_group %in% input$borough)) %>%
+      filter(if (is.null(input$neighbourhood)) TRUE else (neighbourhood %in% input$neighbourhood)) %>%
+      filter(if (is.null(input$room_type)) TRUE else (room_type %in% input$room_type))
   )
 }
 
 shinyApp(ui = ui, server = server)
+
