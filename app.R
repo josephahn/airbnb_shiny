@@ -22,9 +22,46 @@ boroughs <- data %>%
 boroughs <- rbind(c(""), boroughs)
 
 neighbourhoods <- data %>%
+  group_by(neighbourhood_group) %>%
+  select(neighbourhood_group, neighbourhood)
+
+bronx_neighbourhoods <- neighbourhoods %>%
+  filter(neighbourhood_group == 'Bronx') %>%
   distinct(neighbourhood) %>%
-  arrange(neighbourhood)
-neighbourhoods <- rbind(c(""), neighbourhoods)
+  arrange(neighbourhood) %>%
+  select(neighbourhood_group, neighbourhood)
+
+brooklyn_neighbourhoods <- neighbourhoods %>%
+  filter(neighbourhood_group == 'Brooklyn') %>%
+  distinct(neighbourhood) %>%
+  arrange(neighbourhood) %>%
+  select(neighbourhood_group, neighbourhood)
+
+manhattan_neighbourhoods <- neighbourhoods %>%
+  filter(neighbourhood_group == 'Manhattan') %>%
+  distinct(neighbourhood) %>%
+  arrange(neighbourhood) %>%
+  select(neighbourhood_group, neighbourhood)
+
+queens_neighbourhoods <- neighbourhoods %>%
+  filter(neighbourhood_group == 'Queens') %>%
+  distinct(neighbourhood) %>%
+  arrange(neighbourhood) %>%
+  select(neighbourhood_group, neighbourhood)
+
+staten_island_neighbourhoods <- neighbourhoods %>%
+  filter(neighbourhood_group == 'Staten Island') %>%
+  distinct(neighbourhood) %>%
+  arrange(neighbourhood) %>%
+  select(neighbourhood_group, neighbourhood)
+
+neighbourhoods_choices <- setNames(list(
+  as.list(bronx_neighbourhoods$neighbourhood),
+  as.list(brooklyn_neighbourhoods$neighbourhood),
+  as.list(manhattan_neighbourhoods$neighbourhood),
+  as.list(queens_neighbourhoods$neighbourhood),
+  as.list(staten_island_neighbourhoods$neighbourhood)
+), c('Bronx', 'Brooklyn', 'Manhattan', 'Queens', 'Staten Island'))
 
 room_types <- data %>%
   distinct(room_type) %>%
@@ -42,7 +79,7 @@ ui <- fluidPage(
               multiple = TRUE),
   selectInput(inputId = "neighbourhood",
               label = "Neighbourhood",
-              choices = neighbourhoods$neighbourhood,
+              choices = neighbourhoods_choices,
               multiple = TRUE),
   selectInput(inputId = "room_type",
               label = "Room Type",
