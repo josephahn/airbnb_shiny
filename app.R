@@ -23,35 +23,31 @@ boroughs <- rbind(c(""), boroughs)
 
 neighbourhoods <- data %>%
   group_by(neighbourhood_group) %>%
+  distinct(neighbourhood) %>%
   select(neighbourhood_group, neighbourhood)
 
 bronx_neighbourhoods <- neighbourhoods %>%
   filter(neighbourhood_group == 'Bronx') %>%
-  distinct(neighbourhood) %>%
   arrange(neighbourhood) %>%
   select(neighbourhood_group, neighbourhood)
 
 brooklyn_neighbourhoods <- neighbourhoods %>%
   filter(neighbourhood_group == 'Brooklyn') %>%
-  distinct(neighbourhood) %>%
   arrange(neighbourhood) %>%
   select(neighbourhood_group, neighbourhood)
 
 manhattan_neighbourhoods <- neighbourhoods %>%
   filter(neighbourhood_group == 'Manhattan') %>%
-  distinct(neighbourhood) %>%
   arrange(neighbourhood) %>%
   select(neighbourhood_group, neighbourhood)
 
 queens_neighbourhoods <- neighbourhoods %>%
   filter(neighbourhood_group == 'Queens') %>%
-  distinct(neighbourhood) %>%
   arrange(neighbourhood) %>%
   select(neighbourhood_group, neighbourhood)
 
 staten_island_neighbourhoods <- neighbourhoods %>%
   filter(neighbourhood_group == 'Staten Island') %>%
-  distinct(neighbourhood) %>%
   arrange(neighbourhood) %>%
   select(neighbourhood_group, neighbourhood)
 
@@ -88,7 +84,12 @@ ui <- fluidPage(
   dataTableOutput("data")
 )
 
-server <- function(input, output) {
+server <- function(input, output, session) {
+  observeEvent(input$borough, {
+    updateSelectInput(session, "neighbourhood",
+                      choices = neighbourhoods_choices[input$borough])
+  }, ignoreNULL = FALSE)
+
   output$data <- renderDataTable(
     data %>%
       # filter(host_id == input$host) %>%
