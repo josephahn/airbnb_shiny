@@ -64,6 +64,17 @@ room_types <- data %>%
   arrange(room_type)
 room_types <- rbind(c(""), room_types)
 
+max_price <- max(data$price)
+max_min_nights <- max(data$minimum_nights)
+max_reviews <- max(data$number_of_reviews)
+max_reviews_per_month <- max(data$reviews_per_month, na.rm = TRUE)
+max_host_listings <- max(data$calculated_host_listings_count)
+max_availability <- max(data$availability_365)
+
+is_between <- function(number, range) {
+  number >= min(range) & number <= max(range)
+}
+
 ui <- fluidPage(
   # TODO: improve performance https://shiny.rstudio.com/reference/shiny/latest/selectInput.html
   # selectInput(inputId = "host",
@@ -81,6 +92,13 @@ ui <- fluidPage(
               label = "Room Type",
               choices = room_types$room_type,
               multiple = TRUE),
+  sliderInput("price", "Price", value = c(0, max_price), min = 0, max = max_price),
+  sliderInput("min_nights", "Min. Nights", value = c(1, max_min_nights), min = 1, max = max_min_nights),
+  sliderInput("reviews", "Reviews", value = c(0, max_reviews), min = 0, max = max_reviews),
+  sliderInput("reviews_per_month", "Reviews Per Month", value = c(0, max_reviews_per_month), min = 0, max = max_reviews_per_month),
+  sliderInput("host_listings", "Host Listings", value = c(1, max_host_listings), min = 1, max = max_host_listings),
+  sliderInput("availability", "Availability", value = c(0, max_availability), min = 0, max = max_availability),
+  dateRangeInput("last_review", "Last Review"),
   dataTableOutput("data")
 )
 
@@ -90,12 +108,23 @@ server <- function(input, output, session) {
                       choices = neighbourhoods_choices[input$borough])
   }, ignoreNULL = FALSE)
 
+  observeEvent(input$last_review, {
+    print(input$last_review)
+  }, ignoreNULL = FALSE)
+
   output$data <- renderDataTable(
+    # TODO: clean up data - 48,895 total rows but with filters only 38.843
     data %>%
       # filter(host_id == input$host) %>%
       filter(if (is.null(input$borough)) TRUE else (neighbourhood_group %in% input$borough)) %>%
       filter(if (is.null(input$neighbourhood)) TRUE else (neighbourhood %in% input$neighbourhood)) %>%
-      filter(if (is.null(input$room_type)) TRUE else (room_type %in% input$room_type))
+      filter(if (is.null(input$room_type)) TRUE else (room_type %in% input$room_type)) %>%
+      filter(if (is.null(input$price)) TRUE else (is_between(price, input$price))) %>%
+      filter(if (is.null(input$min_nights)) TRUE else (is_between(minimum_nights, input$min_nights))) %>%
+      filter(if (is.null(input$reviews)) TRUE else (is_between(number_of_reviews, input$reviews))) %>%
+      filter(if (is.null(input$reviews_per_month)) TRUE else (is_between(reviews_per_month, input$reviews_per_month))) %>%
+      filter(if (is.null(input$host_listings)) TRUE else (is_between(calculated_host_listings_count, input$host_listings))) %>%
+      filter(if (is.null(input$availability)) TRUE else (is_between(availability_365, input$availability)))
   )
 }
 
