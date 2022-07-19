@@ -14,6 +14,7 @@ hosts <- data %>%
 # https://stackoverflow.com/questions/33105044/make-list-for-shiny-dropdown-selectinput
 host_input_choices <- as.list(hosts$host_id)
 names(host_input_choices) <- hosts$host_id_name
+host_input_choices <- c("", host_input_choices)
 
 boroughs <- data %>%
   distinct(neighbourhood_group) %>%
@@ -76,10 +77,10 @@ is_between <- function(number, range) {
 }
 
 ui <- fluidPage(
-  # TODO: improve performance https://shiny.rstudio.com/reference/shiny/latest/selectInput.html
-  # selectInput(inputId = "host",
-  #             label = "Host",
-  #             choices = host_input_choices),
+  selectizeInput(inputId = "host",
+                 label = "Host",
+                 choices = NULL,
+                 multiple = TRUE),
   selectInput(inputId = "borough",
               label = "Borough",
               choices = boroughs$neighbourhood_group,
@@ -103,19 +104,17 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
+  updateSelectizeInput(session, 'host', choices = host_input_choices, server = TRUE)
+
   observeEvent(input$borough, {
     updateSelectInput(session, "neighbourhood",
                       choices = neighbourhoods_choices[input$borough])
   }, ignoreNULL = FALSE)
 
-  observeEvent(input$last_review, {
-    print(input$last_review)
-  }, ignoreNULL = FALSE)
-
   output$data <- renderDataTable(
     # TODO: clean up data - 48,895 total rows but with filters only 38.843
     data %>%
-      # filter(host_id == input$host) %>%
+      filter(if (is.null(input$host)) TRUE else (host_id %in% input$host)) %>%
       filter(if (is.null(input$borough)) TRUE else (neighbourhood_group %in% input$borough)) %>%
       filter(if (is.null(input$neighbourhood)) TRUE else (neighbourhood %in% input$neighbourhood)) %>%
       filter(if (is.null(input$room_type)) TRUE else (room_type %in% input$room_type)) %>%
