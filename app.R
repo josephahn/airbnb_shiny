@@ -4,6 +4,7 @@ library(dplyr)
 
 # import data
 data <- read.csv("nyc_airbnb/AB_NYC_2019.csv")
+data[is.na(data)] <- 0
 
 # hosts
 hosts <- data %>%
@@ -73,7 +74,7 @@ max_host_listings <- max(data$calculated_host_listings_count)
 max_availability <- max(data$availability_365)
 
 is_between <- function(number, range) {
-  number >= min(range) & number <= max(range)
+  ifelse(is.na(number), TRUE, number >= min(range) & number <= max(range)  )
 }
 
 ui <- fluidPage(
@@ -112,7 +113,6 @@ server <- function(input, output, session) {
   }, ignoreNULL = FALSE)
 
   output$data <- renderDataTable(
-    # TODO: clean up data - 48,895 total rows but with filters only 38.843
     data %>%
       filter(if (is.null(input$host)) TRUE else (host_id %in% input$host)) %>%
       filter(if (is.null(input$borough)) TRUE else (neighbourhood_group %in% input$borough)) %>%
