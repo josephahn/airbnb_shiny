@@ -78,30 +78,42 @@ is_between <- function(number, range) {
 }
 
 ui <- fluidPage(
-  selectizeInput(inputId = "host",
-                 label = "Host",
-                 choices = NULL,
+  fluidRow(
+    column(4, 
+      selectizeInput(inputId = "host",
+                    label = "Host",
+                    choices = NULL,
+                    multiple = TRUE),
+      selectInput(inputId = "borough",
+                 label = "Borough",
+                 choices = boroughs$neighbourhood_group,
                  multiple = TRUE),
-  selectInput(inputId = "borough",
-              label = "Borough",
-              choices = boroughs$neighbourhood_group,
-              multiple = TRUE),
-  selectInput(inputId = "neighbourhood",
-              label = "Neighbourhood",
-              choices = neighbourhoods_choices,
-              multiple = TRUE),
-  selectInput(inputId = "room_type",
-              label = "Room Type",
-              choices = room_types$room_type,
-              multiple = TRUE),
-  sliderInput("price", "Price", value = c(0, max_price), min = 0, max = max_price),
-  sliderInput("min_nights", "Min. Nights", value = c(1, max_min_nights), min = 1, max = max_min_nights),
-  sliderInput("reviews", "Reviews", value = c(0, max_reviews), min = 0, max = max_reviews),
-  sliderInput("reviews_per_month", "Reviews Per Month", value = c(0, max_reviews_per_month), min = 0, max = max_reviews_per_month),
-  sliderInput("host_listings", "Host Listings", value = c(1, max_host_listings), min = 1, max = max_host_listings),
-  sliderInput("availability", "Availability", value = c(0, max_availability), min = 0, max = max_availability),
-  dateRangeInput("last_review", "Last Review"),
-  dataTableOutput("data")
+      selectInput(inputId = "neighbourhood",
+                 label = "Neighbourhood",
+                 choices = neighbourhoods_choices,
+                 multiple = TRUE),
+      selectInput(inputId = "room_type",
+                 label = "Room Type",
+                 choices = room_types$room_type,
+                 multiple = TRUE)
+    ),
+    column(4, 
+      sliderInput("price", "Price", value = c(0, max_price), min = 0, max = max_price),
+      sliderInput("min_nights", "Min. Nights", value = c(1, max_min_nights), min = 1, max = max_min_nights),
+      sliderInput("host_listings", "Host Listings", value = c(1, max_host_listings), min = 1, max = max_host_listings),
+      sliderInput("availability", "Availability", value = c(0, max_availability), min = 0, max = max_availability)
+    ),
+    column(4, 
+      sliderInput("reviews", "Reviews", value = c(0, max_reviews), min = 0, max = max_reviews),
+      sliderInput("reviews_per_month", "Reviews Per Month", value = c(0, max_reviews_per_month), min = 0, max = max_reviews_per_month),
+      dateRangeInput("last_review", "Last Review")
+    )
+  ),
+  fluidRow(
+    column(12, 
+      dataTableOutput("data")
+    )
+  )
 )
 
 server <- function(input, output, session) {
