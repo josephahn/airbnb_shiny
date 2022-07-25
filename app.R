@@ -1,9 +1,10 @@
 # import libraries
 library(shiny)
 library(dplyr)
+library(leaflet)
 
 # import data
-data <- read.csv("nyc_airbnb/AB_NYC_2019.csv")
+data <- read.csv("ABNB_NYC_2019.csv")
 data[is.na(data)] <- 0
 
 # hosts
@@ -111,6 +112,11 @@ ui <- fluidPage(
   ),
   fluidRow(
     column(12, 
+      leafletOutput("map")
+    )
+  ),
+  fluidRow(
+    column(12, 
       dataTableOutput("data")
     )
   )
@@ -123,6 +129,12 @@ server <- function(input, output, session) {
     updateSelectInput(session, "neighbourhood",
                       choices = neighbourhoods_choices[input$borough])
   }, ignoreNULL = FALSE)
+  
+  output$map <- renderLeaflet({
+    leaflet() %>%
+      addTiles() %>%
+      setView(lat = 40.730610, lng = -73.935242, zoom = 10)
+  })
 
   output$data <- renderDataTable(
     data %>%
