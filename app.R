@@ -1,5 +1,6 @@
 # import libraries
 library(shiny)
+library(shinyWidgets)
 library(dplyr)
 library(leaflet)
 
@@ -99,14 +100,14 @@ ui <- fluidPage(
                  multiple = TRUE)
     ),
     column(4, 
-      sliderInput("price", "Price", value = c(0, max_price), min = 0, max = max_price),
-      sliderInput("min_nights", "Min. Nights", value = c(1, max_min_nights), min = 1, max = max_min_nights),
-      sliderInput("host_listings", "Host Listings", value = c(1, max_host_listings), min = 1, max = max_host_listings),
-      sliderInput("availability", "Availability", value = c(0, max_availability), min = 0, max = max_availability)
+      numericRangeInput("price", "Price", value = c(0, max_price), min = 0, max = max_price),
+      numericRangeInput("min_nights", "Min. Nights", value = c(1, max_min_nights), min = 1, max = max_min_nights),
+      numericRangeInput("host_listings", "Host Listings", value = c(1, max_host_listings), min = 1, max = max_host_listings),
+      numericRangeInput("availability", "Availability", value = c(0, max_availability), min = 0, max = max_availability)
     ),
     column(4, 
-      sliderInput("reviews", "Reviews", value = c(0, max_reviews), min = 0, max = max_reviews),
-      sliderInput("reviews_per_month", "Reviews Per Month", value = c(0, max_reviews_per_month), min = 0, max = max_reviews_per_month),
+      numericRangeInput("reviews", "Reviews", value = c(0, max_reviews), min = 0, max = max_reviews),
+      numericRangeInput("reviews_per_month", "Reviews Per Month", value = c(0, max_reviews_per_month), min = 0, max = max_reviews_per_month),
       dateRangeInput("last_review", "Last Review")
     )
   ),
@@ -131,27 +132,28 @@ server <- function(input, output, session) {
   }, ignoreNULL = FALSE)
   
   output$map <- renderLeaflet({
-    leaflet(
-      data = data %>%
-        filter(if (is.null(input$host)) TRUE else (host_id %in% input$host)) %>%
-        filter(if (is.null(input$borough)) TRUE else (neighbourhood_group %in% input$borough)) %>%
-        filter(if (is.null(input$neighbourhood)) TRUE else (neighbourhood %in% input$neighbourhood)) %>%
-        filter(if (is.null(input$room_type)) TRUE else (room_type %in% input$room_type)) %>%
-        filter(if (is.null(input$price)) TRUE else (is_between(price, input$price))) %>%
-        filter(if (is.null(input$min_nights)) TRUE else (is_between(minimum_nights, input$min_nights))) %>%
-        filter(if (is.null(input$reviews)) TRUE else (is_between(number_of_reviews, input$reviews))) %>%
-        filter(if (is.null(input$reviews_per_month)) TRUE else (is_between(reviews_per_month, input$reviews_per_month))) %>%
-        filter(if (is.null(input$host_listings)) TRUE else (is_between(calculated_host_listings_count, input$host_listings))) %>%
-        filter(if (is.null(input$availability)) TRUE else (is_between(availability_365, input$availability))),
-      options = leafletOptions(preferCanvas = TRUE)
-    ) %>%
+    leaflet(options = leafletOptions(preferCanvas = TRUE)) %>%
       # https://community.rstudio.com/t/plotting-thousands-of-points-in-leaflet-a-way-to-improve-the-speed/8196/3
       addProviderTiles(providers$Esri.WorldGrayCanvas, options = providerTileOptions(
         updateWhenZooming = FALSE,      # map won't update tiles until zoom is done
         updateWhenIdle = FALSE           # map won't load new tiles when panning
       )) %>%
       setView(lat = 40.730610, lng = -73.935242, zoom = 10) %>%
-      addCircleMarkers(lng = ~longitude, lat = ~latitude, radius = 1)
+      addCircleMarkers(
+        data = data %>%
+          filter(if (is.null(input$host)) TRUE else (host_id %in% input$host)) %>%
+          filter(if (is.null(input$borough)) TRUE else (neighbourhood_group %in% input$borough)) %>%
+          filter(if (is.null(input$neighbourhood)) TRUE else (neighbourhood %in% input$neighbourhood)) %>%
+          filter(if (is.null(input$room_type)) TRUE else (room_type %in% input$room_type)) %>%
+          filter(if (is.null(input$price)) TRUE else (is_between(price, input$price))) %>%
+          filter(if (is.null(input$min_nights)) TRUE else (is_between(minimum_nights, input$min_nights))) %>%
+          filter(if (is.null(input$reviews)) TRUE else (is_between(number_of_reviews, input$reviews))) %>%
+          filter(if (is.null(input$reviews_per_month)) TRUE else (is_between(reviews_per_month, input$reviews_per_month))) %>%
+          filter(if (is.null(input$host_listings)) TRUE else (is_between(calculated_host_listings_count, input$host_listings))) %>%
+          filter(if (is.null(input$availability)) TRUE else (is_between(availability_365, input$availability))),
+        lng = ~longitude,
+        lat = ~latitude,
+        radius = 1)
   })
 
   output$data <- renderDataTable(
