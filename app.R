@@ -108,7 +108,8 @@ ui <- fluidPage(
     column(4, 
       numericRangeInput("reviews", "Reviews", value = c(0, max_reviews), min = 0, max = max_reviews),
       numericRangeInput("reviews_per_month", "Reviews Per Month", value = c(0, max_reviews_per_month), min = 0, max = max_reviews_per_month),
-      dateRangeInput("last_review", "Last Review")
+      dateRangeInput("last_review", "Last Review"),
+      actionButton("filter", "Filter")
     )
   ),
   fluidRow(
@@ -124,39 +125,8 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-  updateSelectizeInput(session, 'host', choices = host_input_choices, server = TRUE)
-
-  observeEvent(input$borough, {
-    updateSelectInput(session, "neighbourhood",
-                      choices = neighbourhoods_choices[input$borough])
-  }, ignoreNULL = FALSE)
-  
-  output$map <- renderLeaflet({
-    leaflet(options = leafletOptions(preferCanvas = TRUE)) %>%
-      # https://community.rstudio.com/t/plotting-thousands-of-points-in-leaflet-a-way-to-improve-the-speed/8196/3
-      addProviderTiles(providers$Esri.WorldGrayCanvas, options = providerTileOptions(
-        updateWhenZooming = FALSE,      # map won't update tiles until zoom is done
-        updateWhenIdle = FALSE           # map won't load new tiles when panning
-      )) %>%
-      setView(lat = 40.730610, lng = -73.935242, zoom = 10) %>%
-      addCircleMarkers(
-        data = data %>%
-          filter(if (is.null(input$host)) TRUE else (host_id %in% input$host)) %>%
-          filter(if (is.null(input$borough)) TRUE else (neighbourhood_group %in% input$borough)) %>%
-          filter(if (is.null(input$neighbourhood)) TRUE else (neighbourhood %in% input$neighbourhood)) %>%
-          filter(if (is.null(input$room_type)) TRUE else (room_type %in% input$room_type)) %>%
-          filter(if (is.null(input$price)) TRUE else (is_between(price, input$price))) %>%
-          filter(if (is.null(input$min_nights)) TRUE else (is_between(minimum_nights, input$min_nights))) %>%
-          filter(if (is.null(input$reviews)) TRUE else (is_between(number_of_reviews, input$reviews))) %>%
-          filter(if (is.null(input$reviews_per_month)) TRUE else (is_between(reviews_per_month, input$reviews_per_month))) %>%
-          filter(if (is.null(input$host_listings)) TRUE else (is_between(calculated_host_listings_count, input$host_listings))) %>%
-          filter(if (is.null(input$availability)) TRUE else (is_between(availability_365, input$availability))),
-        lng = ~longitude,
-        lat = ~latitude,
-        radius = 1)
-  })
-
-  output$data <- renderDataTable(
+  # https://stackoverflow.com/questions/40811903/in-shiny-update-datatable-with-new-values-from-user-input
+  df <- eventReactive(input$filter, {
     data %>%
       filter(if (is.null(input$host)) TRUE else (host_id %in% input$host)) %>%
       filter(if (is.null(input$borough)) TRUE else (neighbourhood_group %in% input$borough)) %>%
@@ -168,7 +138,37 @@ server <- function(input, output, session) {
       filter(if (is.null(input$reviews_per_month)) TRUE else (is_between(reviews_per_month, input$reviews_per_month))) %>%
       filter(if (is.null(input$host_listings)) TRUE else (is_between(calculated_host_listings_count, input$host_listings))) %>%
       filter(if (is.null(input$availability)) TRUE else (is_between(availability_365, input$availability)))
-  )
+  })
+
+  updateSelectizeInput(session, 'host', choices = host_input_choices, server = TRUE)
+
+  observeEvent(input$borough, {
+    updateSelectInput(session, "neighbourhood",
+                      choices = neighbourhoods_choices[input$borough])
+  }, ignoreNULL = FALSE)
+  
+  # https://stackoverflow.com/questions/28393310/how-to-prevent-leaflet-map-from-resetting-zoom-in-shiny-app
+  observeEvent(input$filter, {
+    leafletProxy("map") %>%
+      clearMarkers() %>%
+      addCircleMarkers(
+        data = df(),
+        lng = ~longitude,
+        lat = ~latitude,
+        radius = 1)
+  })
+  
+  output$map <- renderLeaflet({
+    leaflet(options = leafletOptions(preferCanvas = TRUE)) %>%
+      # https://community.rstudio.com/t/plotting-thousands-of-points-in-leaflet-a-way-to-improve-the-speed/8196/3
+      addProviderTiles(providers$Esri.WorldGrayCanvas, options = providerTileOptions(
+        updateWhenZooming = FALSE,      # map won't update tiles until zoom is done
+        updateWhenIdle = FALSE           # map won't load new tiles when panning
+      )) %>%
+      setView(lat = 40.730610, lng = -73.935242, zoom = 10)
+  })
+  
+  output$data <- renderDataTable(df())
 }
 
 shinyApp(ui = ui, server = server)
