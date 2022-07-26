@@ -149,13 +149,27 @@ server <- function(input, output, session) {
   
   # https://stackoverflow.com/questions/28393310/how-to-prevent-leaflet-map-from-resetting-zoom-in-shiny-app
   observeEvent(input$filter, {
+    new_data <- df()
+    # https://www.drdataking.com/post/how-to-add-multiple-lines-label-on-a-leaflet-map/
+    labels <- sprintf(
+      "Host: %s (%s)<br/>Borough: %s<br/>Neighbourhood: %s<br/>Room Type: %s<br/>Price: $%s",
+      new_data$host_name,
+      new_data$host_id,
+      new_data$neighbourhood_group,
+      new_data$neighbourhood,
+      new_data$room_type,
+      new_data$price
+      ) %>% lapply(htmltools::HTML)
+
     leafletProxy("map") %>%
       clearMarkers() %>%
       addCircleMarkers(
-        data = df(),
+        data = new_data,
         lng = ~longitude,
         lat = ~latitude,
-        radius = 1)
+        radius = 1,
+        label = ~labels
+      )
   })
   
   output$map <- renderLeaflet({
