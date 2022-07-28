@@ -118,6 +118,25 @@ ui <- fluidPage(
     )
   ),
   fluidRow(
+    column(4, 
+      plotOutput("priceHistogram")
+    ),
+    column(4, 
+      plotOutput("reviewsHistogram")
+    ),
+    column(4, 
+      plotOutput("roomBarchart")
+    )
+  ),
+  fluidRow(
+    column(3, 
+      plotOutput("boroughBarchart")
+    ),
+    column(9, 
+      plotOutput("neighbourhoodBarchart")
+    )
+  ),
+  fluidRow(
     column(12, 
       dataTableOutput("data")
     )
@@ -180,6 +199,32 @@ server <- function(input, output, session) {
         updateWhenIdle = FALSE           # map won't load new tiles when panning
       )) %>%
       setView(lat = 40.730610, lng = -73.935242, zoom = 10)
+  })
+  
+  output$priceHistogram <- renderPlot({
+    hist(df()$price, main = "Price", xlab = "Price")
+  })
+  
+  output$reviewsHistogram <- renderPlot({
+    hist(df()$number_of_reviews, main = "Reviews", xlab = "Reviews")
+  })
+  
+  output$roomBarchart <- renderPlot({
+    barplot(table(df()$room_type), main = "Room Type", xlab = "Count", ylab = "Room Type", horiz = TRUE)
+  })
+  
+  output$boroughBarchart <- renderPlot({
+    barplot(sort(table(df()$neighbourhood_group), decreasing = TRUE),
+            main = "Borough",
+            ylab = "Count",
+            las = 3)
+  })
+  
+  output$neighbourhoodBarchart <- renderPlot({
+    barplot(sort(table(df()$neighbourhood), decreasing = TRUE),
+            main = "Neighbourhood",
+            ylab = "Count",
+            las = 3)
   })
   
   output$data <- renderDataTable(df())
