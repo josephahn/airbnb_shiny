@@ -3,10 +3,15 @@ library(shiny)
 library(shinyWidgets)
 library(dplyr)
 library(leaflet)
+library(rgdal)
 
 # import data
 data <- read.csv("ABNB_NYC_2019.csv")
 data[is.na(data)] <- 0
+topoData <- readLines("nyc_neighbourhoods.json") %>%
+  paste(collapse = "\n") %>%
+  fromJSON(simplifyVector = FALSE)
+nyc_neighbourhoods <- rgdal::readOGR("nyc_neighbourhoods.json") 
 
 # hosts
 hosts <- data %>%
@@ -192,13 +197,14 @@ server <- function(input, output, session) {
   })
   
   output$map <- renderLeaflet({
-    leaflet(options = leafletOptions(preferCanvas = TRUE)) %>%
+    leaflet(nyc_neighbourhoods, options = leafletOptions(preferCanvas = TRUE)) %>%
       # https://community.rstudio.com/t/plotting-thousands-of-points-in-leaflet-a-way-to-improve-the-speed/8196/3
       addProviderTiles(providers$Esri.WorldGrayCanvas, options = providerTileOptions(
         updateWhenZooming = FALSE,      # map won't update tiles until zoom is done
         updateWhenIdle = FALSE           # map won't load new tiles when panning
       )) %>%
-      setView(lat = 40.730610, lng = -73.935242, zoom = 10)
+      setView(lat = 40.730610, lng = -73.935242, zoom = 10) %>%
+      addPolygons(label = ~neighborhood, color = "ff7800", weight = 2)
   })
   
   output$priceHistogram <- renderPlot({
