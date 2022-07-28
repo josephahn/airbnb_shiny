@@ -76,9 +76,11 @@ room_types <- rbind(c(""), room_types)
 max_price <- max(data$price)
 max_min_nights <- max(data$minimum_nights)
 max_reviews <- max(data$number_of_reviews)
-max_reviews_per_month <- max(data$reviews_per_month, na.rm = TRUE)
+max_reviews_per_month <- max(data$reviews_per_month)
 max_host_listings <- max(data$calculated_host_listings_count)
 max_availability <- max(data$availability_365)
+min_last_review <- min(data[data$last_review != "", ]$last_review)
+max_last_review <- max(data[data$last_review != "", ]$last_review)
 
 is_between <- function(number, range) {
   ifelse(is.na(number), TRUE, number >= min(range) & number <= max(range)  )
@@ -113,7 +115,7 @@ ui <- fluidPage(
     column(4, 
       numericRangeInput("reviews", "Reviews", value = c(0, max_reviews), min = 0, max = max_reviews),
       numericRangeInput("reviews_per_month", "Reviews Per Month", value = c(0, max_reviews_per_month), min = 0, max = max_reviews_per_month),
-      dateRangeInput("last_review", "Last Review"),
+      dateRangeInput("last_review", "Last Review", start = min_last_review, end = max_last_review),
       actionButton("filter", "Filter")
     )
   ),
@@ -161,7 +163,8 @@ server <- function(input, output, session) {
       filter(if (is.null(input$reviews)) TRUE else (is_between(number_of_reviews, input$reviews))) %>%
       filter(if (is.null(input$reviews_per_month)) TRUE else (is_between(reviews_per_month, input$reviews_per_month))) %>%
       filter(if (is.null(input$host_listings)) TRUE else (is_between(calculated_host_listings_count, input$host_listings))) %>%
-      filter(if (is.null(input$availability)) TRUE else (is_between(availability_365, input$availability)))
+      filter(if (is.null(input$availability)) TRUE else (is_between(availability_365, input$availability))) %>%
+      filter(if (is.null(input$last_review)) TRUE else (is_between(last_review, input$last_review)))
   })
 
   updateSelectizeInput(session, 'host', choices = host_input_choices, server = TRUE)
